@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Wars API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2f;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: #5a5ac1;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #4949b6;
+        }
+
+        #data-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .category {
+            margin-bottom: 30px;
+        }
+
+        .data-item {
+            background-color: #29293d;
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            text-align: left;
+        }
+
+        .data-item:hover {
+            background-color: #383856;
+        }
+
+        .details {
+            margin-top: 10px;
+            background-color: #202030;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            color: #e5e5e5;
+            overflow-x: auto;
+        }
+
+        .clear-button {
+            background-color: #c15a5a;
+            margin-top: 20px;
+        }
+
+        .clear-button:hover {
+            background-color: #b64949;
+        }
+    </style>
+    <script>
+        async function fetchData(endpoint, containerId) {
+            clearAllContainers();
+
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                if (data && data.results) {
+                    data.results.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'data-item';
+                        div.textContent = item.title || item.name;
+                        div.onclick = () => fetchDetails(item.url, containerId + "-details");
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<div class="data-item">Немає доступних даних</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="data-item">Сталася помилка при завантаженні даних</div>';
+            }
+        }
+
+        async function fetchDetails(url, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '<div class="data-item">Завантаження...</div>';
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                container.innerHTML = '<div class="details">' + formatDetails(data) + '</div>';
+            } catch (error) {
+                container.innerHTML = '<div class="data-item">Сталася помилка при завантаженні деталей</div>';
+            }
+        }
+
+        function formatDetails(data) {
+            let formatted = '';
+            for (const key in data) {
+                if (Array.isArray(data[key])) {
+                    formatted += `<strong>${key}:</strong> [${data[key].length} елементів]<br>`;
+                } else if (typeof data[key] === 'string' && data[key].startsWith('http')) {
+                    formatted += `<strong>${key}:</strong> <a href="${data[key]}" target="_blank">Посилання</a><br>`;
+                } else {
+                    formatted += `<strong>${key}:</strong> ${data[key]}<br>`;
+                }
+            }
+            return formatted;
+        }
+
+        function clearAllContainers() {
+            document.querySelectorAll('#data-container .category').forEach(container => {
+                container.innerHTML = '';
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Star Wars API</h1>
+
+    <div style="text-align: center;">
+        <button onclick="fetchData('https://swapi.dev/api/films/', 'films')">Фільми</button>
+        <button onclick="fetchData('https://swapi.dev/api/people/', 'people')">Персонажі</button>
+        <button onclick="fetchData('https://swapi.dev/api/planets/', 'planets')">Планети</button>
+        <button onclick="fetchData('https://swapi.dev/api/starships/', 'starships')">Кораблі</button>
+        <button class="clear-button" onclick="clearAllContainers()">Очистити</button>
+    </div>
+
+    <div id="data-container">
+        <div id="films" class="category"></div>
+        <div id="films-details" class="category"></div>
+
+        <div id="people" class="category"></div>
+        <div id="people-details" class="category"></div>
+
+        <div id="planets" class="category"></div>
+        <div id="planets-details" class="category"></div>
+
+        <div id="starships" class="category"></div>
+        <div id="starships-details" class="category"></div>
+    </div>
+</body>
+</html>
